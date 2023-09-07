@@ -1,6 +1,8 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
+const mongoose = require("mongoose");
+const { error } = require("console");
 
 const app = express();
 
@@ -14,6 +16,15 @@ app.use(
 	})
 );
 
+mongoose.connect("mongodb://127.0.0.1:27017/userDB", { useNewUrlParser: true });
+
+const userSchema = {
+	email: String,
+	password: String,
+};
+
+const User = new mongoose.model("User", userSchema);
+
 app.get("/", (req, res) => {
 	res.render("home");
 });
@@ -24,6 +35,42 @@ app.get("/login", (req, res) => {
 
 app.get("/register", (req, res) => {
 	res.render("register");
+});
+
+app.post("/register", (req, res) => {
+	const newUser = new User({
+		email: req.body.username,
+		password: req.body.password,
+	});
+
+	newUser
+		.save()
+		.then(() => {
+			console.log("User saved successfully....");
+		})
+		.catch((error) => {
+			console.error(error);
+		});
+
+	res.render("secrets");
+});
+
+app.post("/login", (req, res) => {
+	const username = req.body.username;
+	const password = req.body.password;
+
+	User.findOne({ email: username })
+		.then((foundUser) => {
+			if (foundUser) {
+				if (foundUser.password === password) {
+					res.render("secrets");
+					console.log("Login Successful...");
+				}
+			}
+		})
+		.catch((err) => {
+			console.error(err);
+		});
 });
 
 app.listen(3000, () => {
