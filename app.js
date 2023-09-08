@@ -2,6 +2,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const mongoose = require("mongoose");
+const encrypt = require("mongoose-encryption")
 const { error } = require("console");
 
 const app = express();
@@ -16,12 +17,18 @@ app.use(
 	})
 );
 
+require('dotenv').config()
+
 mongoose.connect("mongodb://127.0.0.1:27017/userDB", { useNewUrlParser: true });
 
-const userSchema = {
+const userSchema = new mongoose.Schema ({
 	email: String,
 	password: String,
-};
+});
+
+// Will automatically encrypt when we call save(), and decrypt when we call find()
+const secret = process.env.SECRET
+userSchema.plugin(encrypt, {secret: secret, encryptedFields: ['password']})
 
 const User = new mongoose.model("User", userSchema);
 
