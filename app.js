@@ -102,14 +102,14 @@ app.get("/logout", (req, res) => {
 		} else {
 			console.log("Successfully logged out...");
 		}
-
-		// Destroy the session(not necessary)
-		req.session.destroy((err) => {
-			if (err) {
-				console.error(err);
-			}
-		});
 	});
+
+	// Destroy the session(not necessary)
+	// req.session.destroy((err) => {
+	// 	if (err) {
+	// 		console.error(err);
+	// 	}
+	// });
 
 	res.redirect("/");
 });
