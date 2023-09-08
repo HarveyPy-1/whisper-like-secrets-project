@@ -2,8 +2,10 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const mongoose = require("mongoose");
-const md5 = require("md5")
+const bcrypt = require('bcryptjs')
 const { error } = require("console");
+
+const saltRounds = bcrypt.genSaltSync(10)
 
 require('dotenv').config()
 
@@ -43,9 +45,11 @@ app.get("/register", (req, res) => {
 });
 
 app.post("/register", (req, res) => {
+
+	const hash = bcrypt.hashSync(req.body.password, saltRounds);
 	const newUser = new User({
 		email: req.body.username,
-		password: md5(req.body.password),
+		password: hash,
 	});
 
 	newUser
@@ -67,7 +71,7 @@ app.post("/login", (req, res) => {
 	User.findOne({ email: username })
 		.then((foundUser) => {
 			if (foundUser) {
-				if (foundUser.password === md5(password)) {
+				if (bcrypt.compareSync(password, foundUser.password)) {
 					res.render("secrets");
 					console.log("Login Successful...");
 				}
