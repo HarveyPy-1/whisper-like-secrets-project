@@ -2,8 +2,10 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const mongoose = require("mongoose");
-const encrypt = require("mongoose-encryption")
+const md5 = require("md5")
 const { error } = require("console");
+
+require('dotenv').config()
 
 const app = express();
 
@@ -17,7 +19,6 @@ app.use(
 	})
 );
 
-require('dotenv').config()
 
 mongoose.connect("mongodb://127.0.0.1:27017/userDB", { useNewUrlParser: true });
 
@@ -26,9 +27,6 @@ const userSchema = new mongoose.Schema ({
 	password: String,
 });
 
-// Will automatically encrypt when we call save(), and decrypt when we call find()
-const secret = process.env.SECRET
-userSchema.plugin(encrypt, {secret: secret, encryptedFields: ['password']})
 
 const User = new mongoose.model("User", userSchema);
 
@@ -47,7 +45,7 @@ app.get("/register", (req, res) => {
 app.post("/register", (req, res) => {
 	const newUser = new User({
 		email: req.body.username,
-		password: req.body.password,
+		password: md5(req.body.password),
 	});
 
 	newUser
@@ -69,7 +67,7 @@ app.post("/login", (req, res) => {
 	User.findOne({ email: username })
 		.then((foundUser) => {
 			if (foundUser) {
-				if (foundUser.password === password) {
+				if (foundUser.password === md5(password)) {
 					res.render("secrets");
 					console.log("Login Successful...");
 				}
