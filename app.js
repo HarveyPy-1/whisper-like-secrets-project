@@ -5,6 +5,7 @@ const mongoose = require("mongoose");
 const session = require("express-session");
 const passport = require("passport");
 const passportLocalMongoose = require("passport-local-mongoose");
+const LocalStrategy = require("passport-local");
 
 const app = express();
 
@@ -41,7 +42,7 @@ userSchema.plugin(passportLocalMongoose);
 
 const User = new mongoose.model("User", userSchema);
 
-passport.use(User.createStrategy());
+passport.use(new LocalStrategy(User.authenticate()));
 
 // Create cookie and read cookie
 passport.serializeUser(User.serializeUser());
@@ -84,22 +85,33 @@ app.post("/register", (req, res) => {
 	);
 });
 
-app.post("/login", (req, res) => {
-	const user = new User({
-		username: req.body.username,
-		password: req.body.password,
-	});
+// This only works if your 'name' field in your HTML is named with one of the conventional login names used, such as 'username' and 'password'. Passport will look for those fields and search for them.
+app.post(
+	"/login",
+	passport.authenticate("local", {
+		successRedirect: "/secrets",
+		failureRedirect: "/login",
+	})
+);
 
-	req.login(user, (err) => {
+app.get("/logout", (req, res) => {
+	// Logout user
+	req.logout((err) => {
 		if (err) {
 			console.error(err);
-			res.redirect("login");
 		} else {
-			passport.authenticate("local")(req, res, () => {
-				res.redirect("/secrets");
-			});
+			console.log("Successfully logged out...");
 		}
+
+		// Destroy the session(not necessary)
+		req.session.destroy((err) => {
+			if (err) {
+				console.error(err);
+			}
+		});
 	});
+
+	res.redirect("/");
 });
 
 app.listen(3000, () => {
