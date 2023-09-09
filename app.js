@@ -153,13 +153,6 @@ app.get("/logout", (req, res) => {
 		}
 	});
 
-	// Destroy the session(not necessary)
-	// req.session.destroy((err) => {
-	// 	if (err) {
-	// 		console.error(err);
-	// 	}
-	// });
-
 	res.redirect("/");
 });
 
