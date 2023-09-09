@@ -38,6 +38,7 @@ const userSchema = new mongoose.Schema({
 	email: String,
 	password: String,
 	googleId: String,
+	secret: String,
 });
 
 // Add Passport local plugin to the 'mongoose schema' must be a mongoose schema
@@ -110,11 +111,15 @@ app.get("/register", (req, res) => {
 });
 
 app.get("/secrets", (req, res) => {
-	if (req.isAuthenticated()) {
-		res.render("secrets");
-	} else {
-		res.redirect("login");
-	}
+	User.find({ secret: { $ne: null } })
+		.then((foundUsers) => {
+			if (foundUsers) {
+				res.render("secrets", { userWithSecrets: foundUsers });
+			}
+		})
+		.catch((err) => {
+			console.error(err);
+		});
 });
 
 app.post("/register", (req, res) => {
@@ -142,6 +147,34 @@ app.post(
 		failureRedirect: "/login",
 	})
 );
+
+app.get("/submit", (req, res) => {
+	if (req.isAuthenticated()) {
+		res.render("submit");
+	} else {
+		res.redirect("login");
+	}
+});
+
+app.post("/submit", (req, res) => {
+	if (req.isAuthenticated()) {
+		const submittedSecret = req.body.secret;
+
+		User.findById(req.user.id)
+			.then(async (foundUser) => {
+				if (foundUser) {
+					foundUser.secret = submittedSecret;
+					await foundUser.save();
+					res.redirect("/secrets");
+				}
+			})
+			.catch((err) => {
+				console.error(err);
+			});
+	} else {
+		res.redirect("/login");
+	}
+});
 
 app.get("/logout", (req, res) => {
 	// Logout user
